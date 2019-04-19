@@ -56,7 +56,7 @@ class PNet(nn.Module):
 
 class RNet(nn.Module):
     def __init__(self):
-        super(ONet,self).__init__()
+        super(RNet,self).__init__()
 
         self.features = nn.Sequential(OrderedDict([
                 ('conv1', nn.Conv2d(3, 28, 3, 1)),

@@ -1,10 +1,15 @@
 # -*- coding: utf-8 -*-
 
+import numpy as np 
+import matplotlib.pyplot as plt 
 from PIL import Image 
 from mtcnn.model import PNet,RNet,ONet,load_weight
-from mtcnn.runPNet import run_pnet
+from mtcnn.run import run_pnet,run_rnet,run_onet
+from mtcnn.utils import show_bboxes
+from mtcnn.bboxUtils import nms,calibrate_box,convert_to_square,get_image_crop,correct_bboxes
 
-
+import torch 
+from torch.autograd import Variable
 
 
 def build_pyramid(image,min_face_size=20.0):
@@ -31,11 +36,57 @@ pnet_weight = "weights/pnet.npy"
 p_net = PNet()
 load_weight(p_net,pnet_weight)
 
-file = "/home/liqiang/445.jpeg"
+file = "/home/liqiang/447.jpeg"
 image = Image.open(file)
 
 scales = build_pyramid(image)
 
-boxes = run_pnet(image,p_net,scales[2],0.7)
+bounding_boxes = []
+for s in scales:
+    boxes = run_pnet(image,p_net,s,0.6)
+    bounding_boxes.append(boxes)
 
-print(boxes)
+# 经过P-Net 后，所有可能包含人脸的box
+bounding_boxes = [i for i in bounding_boxes if i is not None]
+bounding_boxes = np.vstack(bounding_boxes)
+
+print("经过P-Net 后，所有可能包含人脸的box个数:{}".format(bounding_boxes.shape[0]))
+
+img1 = show_bboxes(image,bounding_boxes[:,0:4])
+
+keep = nms(bounding_boxes[:,0:5],0.7)
+bounding_boxes = bounding_boxes[keep]
+print("NMS删除重叠较多的box后，box个数:{}".format(bounding_boxes.shape[0]))
+
+img2 = show_bboxes(image,bounding_boxes[:,0:5])
+
+bounding_boxes = calibrate_box(bounding_boxes,bounding_boxes[:,5:])
+
+img3 = show_bboxes(image,bounding_boxes[:,0:4])
+
+
+plt.figure()
+plt.subplot(221)
+plt.imshow(img1)
+
+plt.subplot(222)
+plt.imshow(img2)
+
+plt.subplot(223)
+plt.imshow(img3)
+
+
+#plt.show()
+
+#####
+###　STAGE 2
+####
+rnet = RNet()
+load_weight(rnet,"weights/rnet.npy")
+bounding_boxes = run_rnet(image,bounding_boxes,rnet,0.7)
+
+onet = ONet()
+load_weight(onet,"weights/onet.npy")
+bounding_boxes,landmarks = run_onet(image,bounding_boxes,onet,0.8)
+
+print(landmarks)
