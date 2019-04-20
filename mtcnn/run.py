@@ -87,7 +87,7 @@ def run_rnet(image,bounding_boxes,rnet,threshold,gpu=True):
     keep = nms(bounding_boxes,0.7)
     bounding_boxes = bounding_boxes[keep]
 
-    bounding_boxes = calibrate_box(bounding_boxes[:,0:4],offsets[kee])
+    bounding_boxes = calibrate_box(bounding_boxes,offsets[keep])
     bounding_boxes = convert_to_square(bounding_boxes)
     bounding_boxes[:,0:4] = np.round(bounding_boxes[:,0:4])
 
@@ -112,11 +112,11 @@ def run_onet(image,bounding_boxes,onet,threshold,gpu=True):
     landmarks,offsets,probs = onet(img_crops)
 
     if gpu:
-        probs = probs.detach().cpu().data.numpy()[0,1,:,:]
+        probs = probs.detach().cpu().data.numpy()
         offsets = offsets.detach().cpu().data.numpy()
         landmarks = landmarks.detach().cpu().data.numpy()
     else:
-        probs = probs.data.numpy()[0,1,:,:]
+        probs = probs.data.numpy()
         offsets = offsets.data.numpy()
         landmarks = landmarks.data.numpy()
 
@@ -133,7 +133,7 @@ def run_onet(image,bounding_boxes,onet,threshold,gpu=True):
     landmarks[:,0:5] = np.expand_dims(xmin,1) + np.expand_dims(width,1) * landmarks[:,0:5]
     landmarks[:,5:10] = np.expand_dims(ymin,1) + np.expand_dims(height,1) * landmarks[:,5:10]
 
-    bounding_boxes = calibrate_box(bounding_boxes[:,0:4],offsets)
+    bounding_boxes = calibrate_box(bounding_boxes,offsets)
     keep = nms(bounding_boxes,0.7,mode="min")
     bounding_boxes = bounding_boxes[keep]
     landmarks = landmarks[keep]

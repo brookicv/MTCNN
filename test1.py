@@ -36,7 +36,7 @@ pnet_weight = "weights/pnet.npy"
 p_net = PNet()
 load_weight(p_net,pnet_weight)
 
-file = "/home/liqiang/447.jpeg"
+file = "1.jpg"
 image = Image.open(file)
 
 scales = build_pyramid(image)
@@ -54,7 +54,7 @@ print("经过P-Net 后，所有可能包含人脸的box个数:{}".format(boundin
 
 img1 = show_bboxes(image,bounding_boxes[:,0:4])
 
-keep = nms(bounding_boxes[:,0:5],0.7)
+keep = nms(bounding_boxes,0.7)
 bounding_boxes = bounding_boxes[keep]
 print("NMS删除重叠较多的box后，box个数:{}".format(bounding_boxes.shape[0]))
 
@@ -76,8 +76,6 @@ plt.subplot(223)
 plt.imshow(img3)
 
 
-#plt.show()
-
 #####
 ###　STAGE 2
 ####
@@ -89,4 +87,8 @@ onet = ONet()
 load_weight(onet,"weights/onet.npy")
 bounding_boxes,landmarks = run_onet(image,bounding_boxes,onet,0.8)
 
-print(landmarks)
+img4 = show_bboxes(image,bounding_boxes,landmarks)
+
+plt.subplot(224)
+plt.imshow(img4)
+plt.show()
